@@ -3,238 +3,291 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>日本47都道府県ガイド（最強版）</title>
+<title>日本47ナビ</title>
 
 <style>
 :root{
---bg:#f4ede0; --paper:#fbf6ec; --ink:#1c1814; --sub:#5b4f3f;
---border:#d6c9b0; --accent:#b94e3d;
+--bg:#f4ede0;
+--paper:#fbf6ec;
+--ink:#1c1814;
+--sub:#8a7d6a;
+--border:#d6c9b0;
+--accent:#b94e3d;
 }
-body{margin:0;font-family:system-ui;background:var(--bg);color:var(--ink);}
-header{background:var(--paper);padding:12px;border-bottom:1px solid var(--border);}
-h1{margin:0 0 6px;font-size:18px}
-input{width:100%;padding:10px;border:1px solid var(--border);background:#fff}
-.controls{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}
-button{border:1px solid var(--border);background:#fff;padding:6px 10px;cursor:pointer}
-main{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:12px}
-.card{background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:12px}
-.card h2{font-size:15px;margin:0 0 4px}
-.desc{font-size:12px;color:var(--sub)}
-.tags{margin-top:6px}
-.tags span{font-size:10px;padding:2px 6px;border:1px solid var(--border);margin:2px;display:inline-block;cursor:pointer}
-.row{display:flex;gap:6px;margin-top:6px}
-#modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center}
-.hidden{display:none}
-.modal{background:#fff;width:92%;max-width:560px;max-height:90vh;overflow:auto;border-radius:12px;padding:14px}
-.section{margin-top:10px}
-.section h3{font-size:13px;border-left:4px solid var(--accent);padding-left:6px;margin:0 0 6px}
-.favorite{color:#c33}
-.small{font-size:12px;color:var(--sub)}
-.badge{font-size:11px;border:1px solid var(--border);padding:2px 6px;margin-right:4px}
+
+body{
+margin:0;
+font-family:system-ui;
+background:var(--bg);
+color:var(--ink);
+}
+
+header{
+background:var(--paper);
+padding:16px;
+border-bottom:1px solid var(--border);
+}
+
+h1{
+margin:0;
+font-size:20px;
+}
+
+input{
+width:100%;
+margin-top:10px;
+padding:10px;
+border:1px solid var(--border);
+border-radius:8px;
+}
+
+/* グリッド */
+main{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+gap:14px;
+padding:14px;
+}
+
+/* カード */
+.card{
+background:var(--paper);
+border:1px solid var(--border);
+border-radius:14px;
+padding:12px;
+display:flex;
+flex-direction:column;
+gap:6px;
+}
+
+.card-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.meta{
+font-size:12px;
+color:var(--sub);
+}
+
+.tags span{
+font-size:11px;
+border:1px solid var(--border);
+padding:3px 6px;
+margin:2px;
+border-radius:6px;
+cursor:pointer;
+display:inline-block;
+}
+
+.actions{
+display:flex;
+gap:6px;
+margin-top:6px;
+}
+
+.actions button{
+flex:1;
+padding:6px;
+border:none;
+background:#eee;
+border-radius:6px;
+cursor:pointer;
+}
+
+.favorite{
+color:red;
+}
+
+/* モーダル */
+#modal{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.5);
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+.hidden{display:none;}
+
+.modal-box{
+background:white;
+padding:20px;
+width:90%;
+max-width:500px;
+border-radius:12px;
+max-height:90vh;
+overflow:auto;
+}
 </style>
+
 </head>
 <body>
 
 <header>
-  <h1>日本47都道府県ガイド</h1>
-  <input id="search" placeholder="検索（例：大阪・寿司・自然・温泉）">
-  <div class="controls">
-    <button onclick="showAll()">全件</button>
-    <button onclick="showFavorites()">★お気に入り</button>
-    <button onclick="startQuiz()">クイズ</button>
-    <button onclick="shuffle()">シャッフル</button>
-  </div>
+<h1>日本47都道府県ガイド</h1>
+<input id="search" placeholder="検索（例：大阪・寿司・自然）">
+
+<div style="margin-top:8px;">
+<button onclick="showAll()">全体</button>
+<button onclick="showFavorites()">★お気に入り</button>
+<button onclick="startQuiz()">クイズ</button>
+</div>
 </header>
 
 <main id="app"></main>
 <div id="modal" class="hidden"></div>
 
 <script>
-// ===== データ（47都道府県・簡潔版：後で増補しやすい形） =====
-const prefectures = [
-{name:"北海道",region:"北海道",capital:"札幌市",desc:"広大な自然と食の宝庫",detail:"日本最大の都道府県。観光・グルメともに人気。",food:["ジンギスカン","海鮮丼","スープカレー"],nature:["知床","富良野","函館"],tags:["自然","観光","グルメ","雪","温泉"]},
-{name:"青森県",region:"東北",capital:"青森市",desc:"りんごと祭り",detail:"ねぶた祭で有名。りんごの名産地。",food:["りんご","せんべい汁"],nature:["奥入瀬渓流","白神山地"],tags:["祭り","果物","自然"]},
-{name:"岩手県",region:"東北",capital:"盛岡市",desc:"広い県土と歴史",detail:"面積は全国2位。中尊寺など文化遺産。",food:["わんこそば","盛岡冷麺"],nature:["浄土ヶ浜","龍泉洞"],tags:["歴史","自然","麺"]},
-{name:"宮城県",region:"東北",capital:"仙台市",desc:"杜の都",detail:"松島など景勝地と牛タンが有名。",food:["牛タン","ずんだ餅"],nature:["松島","鳴子峡"],tags:["観光","海","グルメ"]},
-{name:"秋田県",region:"東北",capital:"秋田市",desc:"なまはげの里",detail:"田沢湖や乳頭温泉。米どころ。",food:["きりたんぽ","稲庭うどん"],nature:["田沢湖","男鹿半島"],tags:["温泉","祭り","米"]},
-{name:"山形県",region:"東北",capital:"山形市",desc:"果物王国",detail:"さくらんぼ生産量日本一。",food:["芋煮","米沢牛"],nature:["蔵王","銀山温泉"],tags:["果物","温泉","山"]},
-{name:"福島県",region:"東北",capital:"福島市",desc:"多様な風土",detail:"会津・中通り・浜通りで文化が異なる。",food:["喜多方ラーメン","こづゆ"],nature:["磐梯山","五色沼"],tags:["温泉","山","麺"]},
 
-{name:"茨城県",region:"関東",capital:"水戸市",desc:"納豆とメロン",detail:"農業が盛ん。ひたち海浜公園が人気。",food:["納豆","あんこう鍋"],nature:["筑波山","海浜公園"],tags:["農業","海","観光"]},
-{name:"栃木県",region:"関東",capital:"宇都宮市",desc:"餃子の街",detail:"日光東照宮など世界遺産。",food:["宇都宮餃子","佐野ラーメン"],nature:["日光","那須"],tags:["世界遺産","山","グルメ"]},
-{name:"群馬県",region:"関東",capital:"前橋市",desc:"温泉王国",detail:"草津温泉など名湯多数。",food:["水沢うどん","焼きまんじゅう"],nature:["草津温泉","谷川岳"],tags:["温泉","山"]},
-{name:"埼玉県",region:"関東",capital:"さいたま市",desc:"ベッドタウン",detail:"都心近郊。川越の蔵造りが人気。",food:["うなぎ","草加せんべい"],nature:["長瀞","秩父"],tags:["観光","川","歴史"]},
-{name:"千葉県",region:"関東",capital:"千葉市",desc:"海とテーマパーク",detail:"成田・房総・テーマパーク。",food:["落花生","なめろう"],nature:["九十九里浜","養老渓谷"],tags:["海","観光"]},
-{name:"東京都",region:"関東",capital:"新宿区",desc:"日本の中心",detail:"政治・経済・文化の中心都市。",food:["寿司","天ぷら"],nature:["浅草","高尾山"],tags:["都市","観光","歴史"]},
-{name:"神奈川県",region:"関東",capital:"横浜市",desc:"港町と古都",detail:"横浜と鎌倉。箱根温泉も人気。",food:["シウマイ","サンマーメン"],nature:["箱根","江の島"],tags:["海","温泉","観光"]},
-
-{name:"新潟県",region:"中部",capital:"新潟市",desc:"米どころ",detail:"コシヒカリと日本酒。",food:["へぎそば","タレかつ丼"],nature:["佐渡島","清津峡"],tags:["米","酒","雪"]},
-{name:"富山県",region:"中部",capital:"富山市",desc:"海と山の幸",detail:"立山連峰と富山湾。",food:["白えび","鱒寿司"],nature:["黒部峡谷","立山"],tags:["山","海","観光"]},
-{name:"石川県",region:"中部",capital:"金沢市",desc:"加賀文化",detail:"金沢の町並みと工芸。",food:["のどぐろ","金沢おでん"],nature:["兼六園","能登"],tags:["文化","海","観光"]},
-{name:"福井県",region:"中部",capital:"福井市",desc:"恐竜王国",detail:"恐竜博物館が有名。",food:["越前ガニ","おろしそば"],nature:["東尋坊","三方五湖"],tags:["恐竜","海"]},
-{name:"山梨県",region:"中部",capital:"甲府市",desc:"富士と果物",detail:"ぶどう・桃が名産。",food:["ほうとう","ぶどう"],nature:["富士山","河口湖"],tags:["山","果物","観光"]},
-{name:"長野県",region:"中部",capital:"長野市",desc:"山岳リゾート",detail:"日本アルプスと軽井沢。",food:["信州そば","おやき"],nature:["上高地","白馬"],tags:["山","温泉","自然"]},
-{name:"岐阜県",region:"中部",capital:"岐阜市",desc:"合掌造り",detail:"白川郷の景観。",food:["飛騨牛","朴葉味噌"],nature:["白川郷","下呂温泉"],tags:["世界遺産","温泉","山"]},
-{name:"静岡県",region:"中部",capital:"静岡市",desc:"お茶と富士",detail:"お茶生産日本一。",food:["うなぎ","静岡おでん"],nature:["富士山","伊豆"],tags:["茶","海","山"]},
-{name:"愛知県",region:"中部",capital:"名古屋市",desc:"ものづくり",detail:"自動車産業の中心。",food:["味噌カツ","ひつまぶし"],nature:["名古屋城","渥美半島"],tags:["産業","グルメ"]},
-
-{name:"三重県",region:"近畿",capital:"津市",desc:"伊勢神宮",detail:"古代からの信仰の地。",food:["伊勢うどん","松阪牛"],nature:["伊勢神宮","熊野古道"],tags:["神社","世界遺産"]},
-{name:"滋賀県",region:"近畿",capital:"大津市",desc:"琵琶湖",detail:"日本最大の湖。",food:["近江牛","鮒寿司"],nature:["琵琶湖","比叡山"],tags:["湖","観光"]},
-{name:"京都府",region:"近畿",capital:"京都市",desc:"古都",detail:"寺社と伝統文化。",food:["湯豆腐","京料理"],nature:["清水寺","嵐山"],tags:["歴史","文化","観光"]},
-{name:"大阪府",region:"近畿",capital:"大阪市",desc:"食い倒れ",detail:"グルメとエンタメ。",food:["たこ焼き","お好み焼き"],nature:["大阪城","通天閣"],tags:["グルメ","都市"]},
-{name:"兵庫県",region:"近畿",capital:"神戸市",desc:"港と山",detail:"神戸・姫路・城崎。",food:["神戸牛","明石焼き"],nature:["姫路城","城崎温泉"],tags:["城","温泉","海"]},
-{name:"奈良県",region:"近畿",capital:"奈良市",desc:"古代日本",detail:"東大寺・法隆寺。",food:["柿の葉寿司","そうめん"],nature:["奈良公園","吉野山"],tags:["世界遺産","歴史"]},
-{name:"和歌山県",region:"近畿",capital:"和歌山市",desc:"熊野信仰",detail:"熊野古道と高野山。",food:["和歌山ラーメン","梅干し"],nature:["熊野古道","白浜"],tags:["世界遺産","海"]},
-
-{name:"鳥取県",region:"中国",capital:"鳥取市",desc:"砂丘",detail:"日本最大級の砂丘。",food:["松葉ガニ","牛骨ラーメン"],nature:["鳥取砂丘","大山"],tags:["砂丘","海","山"]},
-{name:"島根県",region:"中国",capital:"松江市",desc:"神話の国",detail:"出雲大社で有名。",food:["出雲そば","しじみ"],nature:["出雲大社","宍道湖"],tags:["神話","湖"]},
-{name:"岡山県",region:"中国",capital:"岡山市",desc:"晴れの国",detail:"後楽園と倉敷。",food:["デミカツ丼","白桃"],nature:["後楽園","倉敷"],tags:["果物","観光"]},
-{name:"広島県",region:"中国",capital:"広島市",desc:"平和と海",detail:"厳島神社と原爆ドーム。",food:["お好み焼き","牡蠣"],nature:["宮島","しまなみ海道"],tags:["世界遺産","海"]},
-{name:"山口県",region:"中国",capital:"山口市",desc:"本州最西端",detail:"角島大橋や秋吉台。",food:["ふぐ","瓦そば"],nature:["秋吉台","角島"],tags:["海","カルスト"]},
-
-{name:"徳島県",region:"四国",capital:"徳島市",desc:"阿波踊り",detail:"伝統的な踊り祭り。",food:["徳島ラーメン","すだち"],nature:["鳴門の渦潮","祖谷"],tags:["祭り","自然"]},
-{name:"香川県",region:"四国",capital:"高松市",desc:"うどん県",detail:"讃岐うどんの本場。",food:["讃岐うどん","骨付鳥"],nature:["小豆島","屋島"],tags:["麺","島"]},
-{name:"愛媛県",region:"四国",capital:"松山市",desc:"道後温泉",detail:"日本最古の温泉の一つ。",food:["鯛めし","みかん"],nature:["道後温泉","しまなみ海道"],tags:["温泉","海"]},
-{name:"高知県",region:"四国",capital:"高知市",desc:"坂本龍馬",detail:"太平洋に面する自然豊かな県。",food:["カツオのたたき","ゆず"],nature:["四万十川","桂浜"],tags:["海","川"]},
-
-{name:"福岡県",region:"九州",capital:"福岡市",desc:"九州の中心",detail:"屋台文化と交通の要所。",food:["博多ラーメン","もつ鍋"],nature:["博多","太宰府"],tags:["都市","グルメ"]},
-{name:"佐賀県",region:"九州",capital:"佐賀市",desc:"焼き物",detail:"有田焼・伊万里焼。",food:["佐賀牛","いか"],nature:["有田","唐津"],tags:["工芸","海"]},
-{name:"長崎県",region:"九州",capital:"長崎市",desc:"異国情緒",detail:"歴史的な国際都市。",food:["ちゃんぽん","カステラ"],nature:["ハウステンボス","軍艦島"],tags:["歴史","海"]},
-{name:"熊本県",region:"九州",capital:"熊本市",desc:"阿蘇",detail:"世界有数のカルデラ。",food:["馬刺し","辛子蓮根"],nature:["阿蘇山","黒川温泉"],tags:["山","温泉"]},
-{name:"大分県",region:"九州",capital:"大分市",desc:"温泉県",detail:"別府・由布院の温泉。",food:["とり天","だんご汁"],nature:["別府温泉","由布院"],tags:["温泉"]},
-{name:"宮崎県",region:"九州",capital:"宮崎市",desc:"南国",detail:"温暖な気候と海岸。",food:["チキン南蛮","マンゴー"],nature:["高千穂","青島"],tags:["神話","海"]},
-{name:"鹿児島県",region:"九州",capital:"鹿児島市",desc:"桜島",detail:"火山と薩摩文化。",food:["黒豚","さつま揚げ"],nature:["桜島","屋久島"],tags:["火山","世界遺産"]},
-{name:"沖縄県",region:"沖縄",capital:"那覇市",desc:"南国リゾート",detail:"独自文化と美しい海。",food:["ゴーヤチャンプルー","沖縄そば"],nature:["美ら海水族館","石垣島"],tags:["海","リゾート","文化"]}
+/* ===== データ（あとで増やすだけでOK） ===== */
+const data = [
+{name:"北海道",region:"北海道",capital:"札幌市",desc:"広大な自然",food:["ジンギスカン","海鮮"],nature:["知床"],tags:["自然","観光"]},
+{name:"大阪府",region:"近畿",capital:"大阪市",desc:"食い倒れ",food:["たこ焼き","お好み焼き"],nature:["大阪城"],tags:["グルメ","都市"]},
+{name:"東京都",region:"関東",capital:"新宿区",desc:"日本の中心",food:["寿司","天ぷら"],nature:["浅草"],tags:["都市","観光"]}
 ];
 
-// ===== 状態 =====
+/* ===== 状態 ===== */
 let favorites = JSON.parse(localStorage.getItem("fav")||"[]");
 let compareList = [];
 
-// ===== 描画 =====
 const app = document.getElementById("app");
 const modal = document.getElementById("modal");
 const search = document.getElementById("search");
 
+/* ===== 描画 ===== */
 function render(list){
-  app.innerHTML = list.map(p=>`
-  <div class="card">
-    <h2>${p.name}</h2>
-    <div class="desc">${p.desc}</div>
-    <div class="small">${p.region} / ${p.capital}</div>
-    <div class="tags">
-      ${p.tags.map(t=>`<span onclick="tagSearch('${t}')">${t}</span>`).join("")}
-    </div>
-    <div class="row">
-      <button onclick="openDetail('${p.name}')">詳細</button>
-      <button onclick="toggleFav('${p.name}')" class="${favorites.includes(p.name)?'favorite':''}">
-        ${favorites.includes(p.name)?"★":"☆"}
-      </button>
-      <button onclick="addCompare('${p.name}')">比較</button>
-    </div>
-  </div>
-  `).join("");
+app.innerHTML = list.map(p=>`
+<div class="card">
+
+<div class="card-header">
+<h2>${p.name}</h2>
+<span class="${favorites.includes(p.name)?"favorite":""}" onclick="toggleFav('${p.name}')">
+${favorites.includes(p.name)?"★":"☆"}
+</span>
+</div>
+
+<div class="meta">${p.region} / ${p.capital}</div>
+
+<div class="tags">
+${p.tags.map(t=>`<span onclick="tagSearch('${t}')">${t}</span>`).join("")}
+</div>
+
+<div class="actions">
+<button onclick="openDetail('${p.name}')">詳細</button>
+<button onclick="addCompare('${p.name}')">比較</button>
+</div>
+
+</div>
+`).join("");
 }
 
-// ===== 詳細 =====
+/* ===== 詳細 ===== */
 function openDetail(name){
-  const p = prefectures.find(x=>x.name===name);
-  modal.classList.remove("hidden");
-  modal.innerHTML = `
-  <div class="modal">
-    <button onclick="closeModal()">閉じる</button>
-    <h2>${p.name}</h2>
-    <div class="small">${p.region} / ${p.capital}</div>
-    <p>${p.detail}</p>
+const p = data.find(d=>d.name===name);
+modal.classList.remove("hidden");
 
-    <div class="section">
-      <h3>食べ物</h3>
-      <div>${p.food.map(f=>`<span class="badge">${f}</span>`).join("")}</div>
-    </div>
+modal.innerHTML=`
+<div class="modal-box">
+<button onclick="closeModal()">閉じる</button>
+<h2>${p.name}</h2>
+<p>${p.desc}</p>
 
-    <div class="section">
-      <h3>観光</h3>
-      <ul>${p.nature.map(n=>`<li>${n}</li>`).join("")}</ul>
-    </div>
+<h3>食べ物</h3>
+<ul>${p.food.map(f=>`<li>${f}</li>`).join("")}</ul>
 
-    <div class="section">
-      <h3>タグ</h3>
-      <div>${p.tags.map(t=>`<span class="badge" onclick="tagSearch('${t}');closeModal();">${t}</span>`).join("")}</div>
-    </div>
-  </div>`;
+<h3>観光</h3>
+<ul>${p.nature.map(n=>`<li>${n}</li>`).join("")}</ul>
+</div>
+`;
 }
-function closeModal(){ modal.classList.add("hidden"); }
 
-// ===== 検索 =====
-search.oninput = ()=>{
-  const q = search.value;
-  render(prefectures.filter(p=>JSON.stringify(p).includes(q)));
+function closeModal(){
+modal.classList.add("hidden");
+}
+
+/* ===== 検索 ===== */
+search.oninput=()=>{
+const q=search.value;
+render(data.filter(p=>JSON.stringify(p).includes(q)));
 };
+
+/* ===== タグ ===== */
 function tagSearch(tag){
-  render(prefectures.filter(p=>p.tags.includes(tag)));
-}
-function showAll(){ render(prefectures); }
-function shuffle(){
-  const arr=[...prefectures].sort(()=>Math.random()-0.5);
-  render(arr);
+render(data.filter(p=>p.tags.includes(tag)));
 }
 
-// ===== お気に入り =====
+/* ===== お気に入り ===== */
 function toggleFav(name){
-  if(favorites.includes(name)){
-    favorites = favorites.filter(f=>f!==name);
-  }else{
-    favorites.push(name);
-  }
-  localStorage.setItem("fav", JSON.stringify(favorites));
-  render(prefectures);
+if(favorites.includes(name)){
+favorites = favorites.filter(f=>f!==name);
+}else{
+favorites.push(name);
 }
+localStorage.setItem("fav",JSON.stringify(favorites));
+render(data);
+}
+
 function showFavorites(){
-  render(prefectures.filter(p=>favorites.includes(p.name)));
+render(data.filter(p=>favorites.includes(p.name)));
 }
 
-// ===== 比較 =====
+function showAll(){
+render(data);
+}
+
+/* ===== 比較 ===== */
 function addCompare(name){
-  if(!compareList.includes(name)) compareList.push(name);
-  if(compareList.length===2){
-    const items = prefectures.filter(p=>compareList.includes(p.name));
-    modal.classList.remove("hidden");
-    modal.innerHTML = `
-      <div class="modal">
-        <h2>比較</h2>
-        ${items.map(i=>`
-          <h3>${i.name}</h3>
-          <div class="small">${i.region} / ${i.capital}</div>
-          食：${i.food.join(", ")}<br>
-          観光：${i.nature.join(", ")}<hr>
-        `).join("")}
-        <button onclick="closeModal()">閉じる</button>
-      </div>`;
-    compareList=[];
-  }
+if(!compareList.includes(name)) compareList.push(name);
+
+if(compareList.length===2){
+const items = data.filter(p=>compareList.includes(p.name));
+
+modal.classList.remove("hidden");
+modal.innerHTML=`
+<div class="modal-box">
+<h2>比較</h2>
+${items.map(i=>`
+<h3>${i.name}</h3>
+食:${i.food.join(",")}<br>
+観光:${i.nature.join(",")}
+<hr>
+`).join("")}
+<button onclick="closeModal()">閉じる</button>
+</div>
+`;
+compareList=[];
+}
 }
 
-// ===== クイズ =====
+/* ===== クイズ ===== */
 function startQuiz(){
-  const item = prefectures[Math.floor(Math.random()*prefectures.length)];
-  modal.classList.remove("hidden");
-  modal.innerHTML = `
-  <div class="modal">
-    <h3>この名物はどこ？</h3>
-    <p>${item.food[0]}</p>
-    ${prefectures.slice(0,6).map(d=>`
-      <button onclick="checkAnswer('${d.name}','${item.name}')">${d.name}</button>
-    `).join("")}
-    <div class="small">※選択肢はランダム簡略版（後で強化可）</div>
-  </div>`;
-}
-function checkAnswer(ans,correct){
-  alert(ans===correct ? "正解" : `違う（正解：${correct}）`);
-  closeModal();
+const item = data[Math.floor(Math.random()*data.length)];
+modal.classList.remove("hidden");
+
+modal.innerHTML=`
+<div class="modal-box">
+<h3>この食べ物はどこ？</h3>
+<p>${item.food[0]}</p>
+
+${data.map(d=>`
+<button onclick="checkAnswer('${d.name}','${item.name}')">${d.name}</button>
+`).join("")}
+
+</div>
+`;
 }
 
-// 初期表示
-render(prefectures);
+function checkAnswer(ans,correct){
+alert(ans===correct?"正解":"違う");
+closeModal();
+}
+
+render(data);
+
 </script>
+
 </body>
 </html>
